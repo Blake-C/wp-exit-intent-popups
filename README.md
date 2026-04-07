@@ -1,4 +1,4 @@
-# Global Intent Popup
+# Exit Intent Popup
 
 A WordPress plugin for displaying exit intent and timed popups with A/B testing and Google Analytics 4 integration.
 
@@ -6,7 +6,7 @@ A WordPress plugin for displaying exit intent and timed popups with A/B testing 
 
 ## Overview
 
-Global Intent Popup lets you build custom modal content using the WordPress block editor (Gutenberg), then assign those modals to any page or post on your site. Modals can appear when a visitor is about to leave the page, after a set amount of time, or both. Multiple popups can be assigned to a single page to run A/B tests, with a built-in results dashboard to compare performance.
+Exit Intent Popup lets you build custom modal content using the WordPress block editor (Gutenberg), then assign those modals to any page or post on your site. Modals can appear when a visitor is about to leave the page, after a set amount of time, or both. Multiple popups can be assigned to a single page to run A/B tests, with a built-in results dashboard to compare performance.
 
 ---
 

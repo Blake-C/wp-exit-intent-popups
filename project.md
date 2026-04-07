@@ -1,4 +1,4 @@
-# Global Intent Popup
+# Exit Intent Popup
 
 New Wordpress plugin plugin
 

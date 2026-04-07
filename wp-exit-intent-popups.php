@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Global Intent Popup
+ * Plugin Name: Exit Intent Popup
  * Plugin URI:
  * Description: Display exit intent and timed popups with A/B testing and GA4 integration.
  * Version: 1.0.0
