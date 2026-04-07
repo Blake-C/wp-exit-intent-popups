@@ -1,0 +1,227 @@
+<?php
+/**
+ * A/B testing: custom events table, REST tracking endpoint, and results query.
+ *
+ * @package WP_Exit_Intent_Popups
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Class EIP_AB_Testing
+ */
+class EIP_AB_Testing {
+
+	const TABLE_SUFFIX = 'eip_events';
+
+	/**
+	 * Hook into WordPress.
+	 */
+	public function register() {
+		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+	}
+
+	/**
+	 * Create the events DB table on plugin activation.
+	 */
+	public static function create_table() {
+		global $wpdb;
+
+		$table_name      = $wpdb->prefix . self::TABLE_SUFFIX;
+		$charset_collate = $wpdb->get_charset_collate();
+
+		$sql = "CREATE TABLE IF NOT EXISTS {$table_name} (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			popup_id bigint(20) UNSIGNED NOT NULL,
+			page_id bigint(20) UNSIGNED NOT NULL,
+			event_type varchar(20) NOT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY popup_id (popup_id),
+			KEY page_id (page_id),
+			KEY event_type (event_type)
+		) {$charset_collate};";
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( $sql );
+
+		update_option( 'eip_db_version', EIP_DB_VERSION );
+	}
+
+	/**
+	 * Register REST API routes.
+	 */
+	public function register_routes() {
+		register_rest_route(
+			'eip/v1',
+			'/event',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'track_event' ),
+				'permission_callback' => '__return_true',
+				'args'                => array(
+					'popup_id'   => array(
+						'required'          => true,
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+					),
+					'page_id'    => array(
+						'required'          => true,
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+					),
+					'event_type' => array(
+						'required'          => true,
+						'type'              => 'string',
+						'enum'              => array( 'impression', 'conversion', 'close' ),
+						'sanitize_callback' => 'sanitize_key',
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			'eip/v1',
+			'/results',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'rest_get_results' ),
+				'permission_callback' => function() {
+					return current_user_can( 'manage_options' );
+				},
+				'args'                => array(
+					'page_id' => array(
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * REST callback: record a single event.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function track_event( $request ) {
+		global $wpdb;
+
+		$popup_id   = $request->get_param( 'popup_id' );
+		$page_id    = $request->get_param( 'page_id' );
+		$event_type = $request->get_param( 'event_type' );
+
+		// Verify the popup exists and is the correct post type.
+		$popup = get_post( $popup_id );
+		if ( ! $popup || 'exit_intent_popup' !== $popup->post_type ) {
+			return new WP_Error(
+				'invalid_popup',
+				__( 'Invalid popup ID.', 'wp-exit-intent-popups' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$table_name = $wpdb->prefix . self::TABLE_SUFFIX;
+		$inserted   = $wpdb->insert(
+			$table_name,
+			array(
+				'popup_id'   => $popup_id,
+				'page_id'    => $page_id,
+				'event_type' => $event_type,
+				'created_at' => current_time( 'mysql' ),
+			),
+			array( '%d', '%d', '%s', '%s' )
+		);
+
+		if ( false === $inserted ) {
+			return new WP_Error(
+				'db_error',
+				__( 'Could not record event.', 'wp-exit-intent-popups' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return rest_ensure_response( array( 'success' => true ) );
+	}
+
+	/**
+	 * REST callback: return aggregated A/B results.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function rest_get_results( $request ) {
+		$page_id = $request->get_param( 'page_id' );
+		return rest_ensure_response( self::get_results_raw( $page_id ? (int) $page_id : 0 ) );
+	}
+
+	/**
+	 * Query aggregated event counts, optionally filtered by page.
+	 *
+	 * @param int $page_id Optional page ID to filter by.
+	 * @return array
+	 */
+	public static function get_results_raw( $page_id = 0 ) {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . self::TABLE_SUFFIX;
+
+		if ( $page_id ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"SELECT popup_id, page_id, event_type, COUNT(*) AS count FROM {$table_name} WHERE page_id = %d GROUP BY popup_id, page_id, event_type ORDER BY popup_id, page_id, event_type",
+					$page_id
+				)
+			);
+		} else {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$rows = $wpdb->get_results(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT popup_id, page_id, event_type, COUNT(*) AS count FROM {$table_name} GROUP BY popup_id, page_id, event_type ORDER BY popup_id, page_id, event_type"
+			);
+		}
+
+		$data = array();
+
+		foreach ( $rows as $row ) {
+			$key = $row->popup_id . '_' . $row->page_id;
+
+			if ( ! isset( $data[ $key ] ) ) {
+				$popup               = get_post( $row->popup_id );
+				$page                = get_post( $row->page_id );
+				$data[ $key ]        = array(
+					'popup_id'    => (int) $row->popup_id,
+					'popup_title' => $popup ? $popup->post_title : '',
+					'page_id'     => (int) $row->page_id,
+					'page_title'  => $page ? $page->post_title : '',
+					'impressions' => 0,
+					'conversions' => 0,
+					'closes'      => 0,
+					'rate'        => 0,
+				);
+			}
+
+			$count = (int) $row->count;
+			if ( 'impression' === $row->event_type ) {
+				$data[ $key ]['impressions'] = $count;
+			} elseif ( 'conversion' === $row->event_type ) {
+				$data[ $key ]['conversions'] = $count;
+			} elseif ( 'close' === $row->event_type ) {
+				$data[ $key ]['closes'] = $count;
+			}
+		}
+
+		foreach ( $data as &$item ) {
+			if ( $item['impressions'] > 0 ) {
+				$item['rate'] = round( ( $item['conversions'] / $item['impressions'] ) * 100, 2 );
+			}
+		}
+
+		return array_values( $data );
+	}
+}

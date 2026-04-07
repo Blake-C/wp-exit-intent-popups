@@ -1,0 +1,77 @@
+/* ==========================================================================
+   Exit Intent Popup — Admin Styles
+   ========================================================================== */
+
+/* ------------------------------------------------------------------
+   CPT sidebar meta box fields
+   ------------------------------------------------------------------ */
+
+.eip-meta-fields .eip-field {
+	margin-bottom: 1rem;
+}
+
+.eip-meta-fields .eip-field:last-child {
+	margin-bottom: 0;
+}
+
+.eip-meta-fields label {
+	display: block;
+	font-weight: 600;
+	font-size: 13px;
+	margin-bottom: 0.3rem;
+	color: #1d2327;
+}
+
+.eip-meta-fields input[type="number"],
+.eip-meta-fields select {
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+.eip-meta-fields .description {
+	color: #646970;
+	font-size: 12px;
+	margin-top: 0.3rem;
+	line-height: 1.4;
+}
+
+.eip-meta-fields .eip-field--checkbox label {
+	font-weight: 400;
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	cursor: pointer;
+}
+
+.eip-meta-fields .eip-field--checkbox input[type="checkbox"] {
+	margin: 0;
+	flex-shrink: 0;
+}
+
+/* ------------------------------------------------------------------
+   A/B Results page
+   ------------------------------------------------------------------ */
+
+.eip-results-wrap .eip-filter-form {
+	margin: 1.25rem 0;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.eip-results-table .eip-num {
+	text-align: right;
+	width: 110px;
+}
+
+.eip-rate--good {
+	color: #2e7d32;
+	font-weight: 600;
+}
+
+.eip-rate--ok {
+	color: #e65100;
+	font-weight: 600;
+}

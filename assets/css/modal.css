@@ -1,0 +1,192 @@
+/* ==========================================================================
+   Exit Intent Popup — Modal Styles
+   ========================================================================== */
+
+/* Wrapper: covers full viewport when active */
+.eip-modal-wrapper {
+	display: none;
+	position: fixed;
+	inset: 0;
+	z-index: 999999;
+}
+
+.eip-modal-wrapper.eip-is-active {
+	display: block;
+}
+
+/* Overlay */
+.eip-overlay {
+	position: absolute;
+	inset: 0;
+	background: rgba( 0, 0, 0, 0.6 );
+	animation: eip-fade-in 0.25s ease forwards;
+}
+
+/* Base modal panel */
+.eip-modal {
+	position: absolute;
+	overflow-y: auto;
+	box-shadow: 0 8px 40px rgba( 0, 0, 0, 0.25 );
+	border-radius: 4px;
+	padding: 2rem;
+	box-sizing: border-box;
+	animation: eip-fade-in 0.25s ease forwards;
+	outline: none;
+}
+
+/* ------------------------------------------------------------------
+   Sizes
+   ------------------------------------------------------------------ */
+
+.eip-modal--small {
+	width: 360px;
+	max-width: 92vw;
+}
+
+.eip-modal--medium {
+	width: 560px;
+	max-width: 92vw;
+}
+
+.eip-modal--large {
+	width: 820px;
+	max-width: 92vw;
+}
+
+/* ------------------------------------------------------------------
+   Positions
+   ------------------------------------------------------------------ */
+
+.eip-modal--top {
+	top: 0;
+	left: 50%;
+	transform: translateX( -50% );
+	max-width: 100%;
+	width: 100%;
+	border-radius: 0 0 4px 4px;
+}
+
+.eip-modal--bottom {
+	bottom: 0;
+	left: 50%;
+	transform: translateX( -50% );
+	max-width: 100%;
+	width: 100%;
+	border-radius: 4px 4px 0 0;
+}
+
+.eip-modal--left {
+	top: 0;
+	left: 0;
+	height: 100%;
+	max-height: 100vh;
+	border-radius: 0 4px 4px 0;
+}
+
+.eip-modal--right {
+	top: 0;
+	right: 0;
+	height: 100%;
+	max-height: 100vh;
+	border-radius: 4px 0 0 4px;
+}
+
+.eip-modal--center {
+	top: 50%;
+	left: 50%;
+	transform: translate( -50%, -50% );
+	max-height: 90vh;
+}
+
+/* cursor: position is set inline by JS */
+.eip-modal--cursor {
+	max-height: 90vh;
+}
+
+/* ------------------------------------------------------------------
+   Themes
+   ------------------------------------------------------------------ */
+
+.eip-modal--light {
+	background: #ffffff;
+	color: #333333;
+}
+
+.eip-modal--dark {
+	background: #1e1e1e;
+	color: #f0f0f0;
+}
+
+.eip-modal--dark .eip-modal__close {
+	color: #cccccc;
+}
+
+.eip-modal--dark .eip-modal__close:hover,
+.eip-modal--dark .eip-modal__close:focus-visible {
+	background: rgba( 255, 255, 255, 0.12 );
+	color: #ffffff;
+}
+
+/* ------------------------------------------------------------------
+   Close button
+   ------------------------------------------------------------------ */
+
+.eip-modal__close {
+	position: absolute;
+	top: 0.625rem;
+	right: 0.625rem;
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 0.25rem 0.5rem;
+	font-size: 1.5rem;
+	line-height: 1;
+	color: #666666;
+	border-radius: 3px;
+	transition: background 0.2s ease, color 0.2s ease;
+	z-index: 1;
+}
+
+.eip-modal__close:hover,
+.eip-modal__close:focus-visible {
+	background: rgba( 0, 0, 0, 0.07 );
+	color: #000000;
+	outline: none;
+}
+
+/* ------------------------------------------------------------------
+   Content area
+   ------------------------------------------------------------------ */
+
+.eip-modal__content {
+	position: relative;
+}
+
+.eip-modal__content > *:first-child {
+	margin-top: 0;
+}
+
+.eip-modal__content > *:last-child {
+	margin-bottom: 0;
+}
+
+/* ------------------------------------------------------------------
+   Animations
+   ------------------------------------------------------------------ */
+
+@keyframes eip-fade-in {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}
+
+@media ( prefers-reduced-motion: reduce ) {
+	.eip-modal,
+	.eip-overlay {
+		animation: none;
+	}
+}
+
+/* Prevent body scroll while modal is open */
+body.eip-modal-open {
+	overflow: hidden;
+}
