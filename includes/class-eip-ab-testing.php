@@ -60,7 +60,10 @@ class EIP_AB_Testing {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'track_event' ),
-				'permission_callback' => '__return_true',
+				// Verify the WP REST nonce sent by wp_localize_script. This blocks bots
+				// and scrapers that have not loaded the page (and therefore have no nonce),
+				// while allowing both logged-in and anonymous front-end visitors who have.
+				'permission_callback' => array( $this, 'verify_event_nonce' ),
 				'args'                => array(
 					'popup_id'   => array(
 						'required'          => true,
@@ -102,6 +105,30 @@ class EIP_AB_Testing {
 	}
 
 	/**
+	 * Permission callback: verify the WP REST nonce from the X-WP-Nonce header.
+	 *
+	 * Uses wp_create_nonce( 'wp_rest' ), which works for both logged-in and
+	 * anonymous users (WordPress 4.7+). Bots that do not execute the page JS
+	 * will not have a valid nonce and will receive a 403.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return true|WP_Error
+	 */
+	public function verify_event_nonce( $request ) {
+		$nonce = $request->get_header( 'X-WP-Nonce' );
+
+		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'A valid nonce is required.', 'wp-exit-intent-popups' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
 	 * REST callback: record a single event.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -120,6 +147,15 @@ class EIP_AB_Testing {
 			return new WP_Error(
 				'invalid_popup',
 				__( 'Invalid popup ID.', 'wp-exit-intent-popups' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Verify the page exists (page_id 0 is acceptable for non-singular contexts).
+		if ( $page_id > 0 && ! get_post( $page_id ) ) {
+			return new WP_Error(
+				'invalid_page',
+				__( 'Invalid page ID.', 'wp-exit-intent-popups' ),
 				array( 'status' => 400 )
 			);
 		}
