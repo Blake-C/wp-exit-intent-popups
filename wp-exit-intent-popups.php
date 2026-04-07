@@ -20,12 +20,12 @@ define( 'EIP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'EIP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'EIP_DB_VERSION', '1.0' );
 
-require_once EIP_PLUGIN_DIR . 'includes/class-post-type.php';
-require_once EIP_PLUGIN_DIR . 'includes/class-popup-settings.php';
-require_once EIP_PLUGIN_DIR . 'includes/class-page-assignment.php';
-require_once EIP_PLUGIN_DIR . 'includes/class-frontend.php';
-require_once EIP_PLUGIN_DIR . 'includes/class-ab-testing.php';
-require_once EIP_PLUGIN_DIR . 'includes/class-admin.php';
+require_once EIP_PLUGIN_DIR . 'includes/class-eip-post-type.php';
+require_once EIP_PLUGIN_DIR . 'includes/class-eip-popup-settings.php';
+require_once EIP_PLUGIN_DIR . 'includes/class-eip-page-assignment.php';
+require_once EIP_PLUGIN_DIR . 'includes/class-eip-frontend.php';
+require_once EIP_PLUGIN_DIR . 'includes/class-eip-ab-testing.php';
+require_once EIP_PLUGIN_DIR . 'includes/class-eip-admin.php';
 
 register_activation_hook( __FILE__, 'eip_activate' );
 

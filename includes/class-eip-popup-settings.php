@@ -51,7 +51,7 @@ class EIP_Popup_Settings {
 					'single'        => true,
 					'type'          => $type,
 					'default'       => $default,
-					'auth_callback' => function() {
+					'auth_callback' => function () {
 						return current_user_can( 'edit_posts' );
 					},
 				)
@@ -83,15 +83,19 @@ class EIP_Popup_Settings {
 
 		$delay          = (int) get_post_meta( $post->ID, '_eip_popup_delay', true );
 		$auto_appear    = (int) get_post_meta( $post->ID, '_eip_auto_appear', true );
-		$frequency      = get_post_meta( $post->ID, '_eip_frequency', true ) ?: 'session';
+		$frequency      = get_post_meta( $post->ID, '_eip_frequency', true );
+		$frequency      = $frequency ? $frequency : 'session';
 		$frequency_days = (int) get_post_meta( $post->ID, '_eip_frequency_days', true );
-		$frequency_days = $frequency_days ?: 7;
-		$position       = get_post_meta( $post->ID, '_eip_position', true ) ?: 'center';
-		$size           = get_post_meta( $post->ID, '_eip_size', true ) ?: 'medium';
+		$frequency_days = $frequency_days ? $frequency_days : 7;
+		$position       = get_post_meta( $post->ID, '_eip_position', true );
+		$position       = $position ? $position : 'center';
+		$size           = get_post_meta( $post->ID, '_eip_size', true );
+		$size           = $size ? $size : 'medium';
 		$overlay_click  = (bool) get_post_meta( $post->ID, '_eip_overlay_click', true );
-		$theme          = get_post_meta( $post->ID, '_eip_theme', true ) ?: 'light';
+		$theme          = get_post_meta( $post->ID, '_eip_theme', true );
+		$theme          = $theme ? $theme : 'light';
 
-		$output  = '<div class="eip-meta-fields">';
+		$output = '<div class="eip-meta-fields">';
 
 		// Popup Delay.
 		$output .= '<div class="eip-field">';
@@ -113,9 +117,9 @@ class EIP_Popup_Settings {
 			'session' => __( 'Session', 'wp-exit-intent-popups' ),
 			'time'    => __( 'Time', 'wp-exit-intent-popups' ),
 		);
-		$output .= '<div class="eip-field">';
-		$output .= '<label for="eip_frequency">' . esc_html__( 'Frequency', 'wp-exit-intent-popups' ) . '</label>';
-		$output .= '<select id="eip_frequency" name="eip_frequency">';
+		$output           .= '<div class="eip-field">';
+		$output           .= '<label for="eip_frequency">' . esc_html__( 'Frequency', 'wp-exit-intent-popups' ) . '</label>';
+		$output           .= '<select id="eip_frequency" name="eip_frequency">';
 		foreach ( $frequency_options as $value => $label ) {
 			$output .= '<option value="' . esc_attr( $value ) . '"' . selected( $frequency, $value, false ) . '>' . esc_html( $label ) . '</option>';
 		}
@@ -138,9 +142,9 @@ class EIP_Popup_Settings {
 			'center' => __( 'Center', 'wp-exit-intent-popups' ),
 			'cursor' => __( 'Mouse Exit Position', 'wp-exit-intent-popups' ),
 		);
-		$output .= '<div class="eip-field">';
-		$output .= '<label for="eip_position">' . esc_html__( 'Popup Position', 'wp-exit-intent-popups' ) . '</label>';
-		$output .= '<select id="eip_position" name="eip_position">';
+		$output          .= '<div class="eip-field">';
+		$output          .= '<label for="eip_position">' . esc_html__( 'Popup Position', 'wp-exit-intent-popups' ) . '</label>';
+		$output          .= '<select id="eip_position" name="eip_position">';
 		foreach ( $position_options as $value => $label ) {
 			$output .= '<option value="' . esc_attr( $value ) . '"' . selected( $position, $value, false ) . '>' . esc_html( $label ) . '</option>';
 		}
@@ -153,9 +157,9 @@ class EIP_Popup_Settings {
 			'medium' => __( 'Medium', 'wp-exit-intent-popups' ),
 			'large'  => __( 'Large', 'wp-exit-intent-popups' ),
 		);
-		$output .= '<div class="eip-field">';
-		$output .= '<label for="eip_size">' . esc_html__( 'Size', 'wp-exit-intent-popups' ) . '</label>';
-		$output .= '<select id="eip_size" name="eip_size">';
+		$output      .= '<div class="eip-field">';
+		$output      .= '<label for="eip_size">' . esc_html__( 'Size', 'wp-exit-intent-popups' ) . '</label>';
+		$output      .= '<select id="eip_size" name="eip_size">';
 		foreach ( $size_options as $value => $label ) {
 			$output .= '<option value="' . esc_attr( $value ) . '"' . selected( $size, $value, false ) . '>' . esc_html( $label ) . '</option>';
 		}
@@ -175,9 +179,9 @@ class EIP_Popup_Settings {
 			'light' => __( 'Light', 'wp-exit-intent-popups' ),
 			'dark'  => __( 'Dark', 'wp-exit-intent-popups' ),
 		);
-		$output .= '<div class="eip-field">';
-		$output .= '<label for="eip_theme">' . esc_html__( 'Theme', 'wp-exit-intent-popups' ) . '</label>';
-		$output .= '<select id="eip_theme" name="eip_theme">';
+		$output       .= '<div class="eip-field">';
+		$output       .= '<label for="eip_theme">' . esc_html__( 'Theme', 'wp-exit-intent-popups' ) . '</label>';
+		$output       .= '<select id="eip_theme" name="eip_theme">';
 		foreach ( $theme_options as $value => $label ) {
 			$output .= '<option value="' . esc_attr( $value ) . '"' . selected( $theme, $value, false ) . '>' . esc_html( $label ) . '</option>';
 		}

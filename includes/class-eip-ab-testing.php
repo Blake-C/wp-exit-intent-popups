@@ -88,7 +88,7 @@ class EIP_AB_Testing {
 			array(
 				'methods'             => 'GET',
 				'callback'            => array( $this, 'rest_get_results' ),
-				'permission_callback' => function() {
+				'permission_callback' => function () {
 					return current_user_can( 'manage_options' );
 				},
 				'args'                => array(
@@ -125,7 +125,8 @@ class EIP_AB_Testing {
 		}
 
 		$table_name = $wpdb->prefix . self::TABLE_SUFFIX;
-		$inserted   = $wpdb->insert(
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- event tracking insert into plugin-owned table.
+		$inserted = $wpdb->insert(
 			$table_name,
 			array(
 				'popup_id'   => $popup_id,
@@ -170,18 +171,18 @@ class EIP_AB_Testing {
 		$table_name = $wpdb->prefix . self::TABLE_SUFFIX;
 
 		if ( $page_id ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- aggregate query on plugin-owned table; caching not appropriate for real-time A/B data.
 			$rows = $wpdb->get_results(
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from trusted $wpdb->prefix.
 					"SELECT popup_id, page_id, event_type, COUNT(*) AS count FROM {$table_name} WHERE page_id = %d GROUP BY popup_id, page_id, event_type ORDER BY popup_id, page_id, event_type",
 					$page_id
 				)
 			);
 		} else {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- aggregate query on plugin-owned table; no user input; caching not appropriate for real-time A/B data.
 			$rows = $wpdb->get_results(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from trusted $wpdb->prefix.
 				"SELECT popup_id, page_id, event_type, COUNT(*) AS count FROM {$table_name} GROUP BY popup_id, page_id, event_type ORDER BY popup_id, page_id, event_type"
 			);
 		}
@@ -192,9 +193,9 @@ class EIP_AB_Testing {
 			$key = $row->popup_id . '_' . $row->page_id;
 
 			if ( ! isset( $data[ $key ] ) ) {
-				$popup               = get_post( $row->popup_id );
-				$page                = get_post( $row->page_id );
-				$data[ $key ]        = array(
+				$popup        = get_post( $row->popup_id );
+				$page         = get_post( $row->page_id );
+				$data[ $key ] = array(
 					'popup_id'    => (int) $row->popup_id,
 					'popup_title' => $popup ? $popup->post_title : '',
 					'page_id'     => (int) $row->page_id,

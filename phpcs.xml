@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<ruleset name="WP Exit Intent Popups Coding Standards">
+	<!-- See https://github.com/squizlabs/PHP_CodeSniffer/wiki/Annotated-ruleset.xml -->
+	<!-- See https://github.com/WordPress-Coding-Standards/WordPress-Coding-Standards -->
+
+	<description>A custom set of code standard rules for the WP Exit Intent Popups plugin.</description>
+
+	<arg value="ps"/>
+	<arg name="colors"/>
+	<arg name="parallel" value="8"/>
+	<arg name="cache" value=".phpcs.cache"/>
+	<arg name="extensions" value="php"/>
+
+	<file>.</file>
+
+	<exclude-pattern>./node_modules</exclude-pattern>
+	<exclude-pattern>./bower_components</exclude-pattern>
+	<exclude-pattern>./vendor</exclude-pattern>
+	<exclude-pattern>./assets</exclude-pattern>
+
+	<rule ref="WordPress">
+		<exclude name="Squiz.Commenting.FileComment.SpacingAfterComment"/>
+		<exclude name="Squiz.Commenting.FileComment.MissingPackageTag"/>
+		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.Found"/>
+		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed"/>
+	</rule>
+
+	<!-- Enforce the plugin text domain. -->
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element key="0" value="wp-exit-intent-popups"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Enforce the plugin global namespace prefix. -->
+	<!-- eip / EIP are 3-char prefixes unique enough for this private plugin; suppress the length warning. -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element key="0" value="eip"/>
+				<element key="1" value="EIP"/>
+			</property>
+		</properties>
+		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.ShortPrefixPassed"/>
+	</rule>
+
+	<config name="testVersion" value="8.0-99.0"/>
+
+	<rule ref="PHPCompatibility">
+		<exclude name="PHPCompatibility.PHP.NewClasses.errorFound"/>
+		<exclude name="PHPCompatibility.PHP.NewClasses.typeerrorFound"/>
+		<exclude name="PHPCompatibility.PHP.NewConstants.json_pretty_printFound"/>
+		<exclude name="PHPCompatibility.PHP.NewConstants.php_version_idFound"/>
+		<exclude name="PHPCompatibility.PHP.NewFunctions.hash_equalsFound"/>
+		<exclude name="PHPCompatibility.PHP.NewFunctions.json_last_error_msgFound"/>
+		<exclude name="PHPCompatibility.PHP.NewFunctions.random_intFound"/>
+		<exclude name="PHPCompatibility.PHP.NewFunctions.random_bytesFound"/>
+		<exclude name="PHPCompatibility.PHP.NewFunctions.array_replace_recursiveFound"/>
+		<exclude name="PHPCompatibility.PHP.NewInterfaces.jsonserializableFound"/>
+	</rule>
+
+	<rule ref="PHPCompatibility.Extensions.RemovedExtensions">
+		<properties>
+			<property name="functionWhitelist" type="array">
+				<element key="0" value="mysql_to_rfc3339"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>
