@@ -111,6 +111,7 @@ class EIP_Settings {
 
 		wp_enqueue_style( 'wp-color-picker' );
 		wp_enqueue_script( 'wp-color-picker' );
+		wp_add_inline_script( 'wp-color-picker', 'jQuery(function($){$(".eip-color-picker").wpColorPicker();});' );
 	}
 
 	/**
@@ -390,8 +391,5 @@ class EIP_Settings {
 		submit_button( __( 'Save Settings', 'wp-exit-intent-popups' ) );
 
 		echo '</form></div>';
-
-		// Inline script to initialise colour pickers.
-		echo '<script>jQuery(function($){$(".eip-color-picker").wpColorPicker();});</script>';
 	}
 }
