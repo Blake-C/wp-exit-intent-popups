@@ -151,7 +151,15 @@ class EIP_Admin {
 				$edit_url   = get_edit_post_link( $row['popup_id'] );
 				$page_url   = get_permalink( $row['page_id'] );
 				$rate       = $row['rate'];
-				$rate_class = $rate >= 10 ? ' eip-rate--good' : ( $rate >= 5 ? ' eip-rate--ok' : '' );
+				$sufficient = $row['impressions'] >= 30;
+				$rate_class = '';
+				if ( $sufficient ) {
+					$rate_class = $rate >= 10 ? ' eip-rate--good' : ( $rate >= 5 ? ' eip-rate--ok' : '' );
+				}
+				$rate_label = esc_html( $rate ) . '%';
+				if ( ! $sufficient ) {
+					$rate_label .= '&thinsp;<abbr title="' . esc_attr__( 'Fewer than 30 impressions — insufficient data for reliable conclusions', 'wp-exit-intent-popups' ) . '">&#9888;</abbr>';
+				}
 
 				$output .= '<tr>';
 				$output .= '<td><a href="' . esc_url( $edit_url ) . '">' . esc_html( $row['popup_title'] ) . '</a></td>';
@@ -159,7 +167,7 @@ class EIP_Admin {
 				$output .= '<td class="eip-num">' . esc_html( number_format_i18n( $row['impressions'] ) ) . '</td>';
 				$output .= '<td class="eip-num">' . esc_html( number_format_i18n( $row['conversions'] ) ) . '</td>';
 				$output .= '<td class="eip-num">' . esc_html( number_format_i18n( $row['closes'] ) ) . '</td>';
-				$output .= '<td class="eip-num eip-rate' . esc_attr( $rate_class ) . '">' . esc_html( $rate ) . '%</td>';
+				$output .= '<td class="eip-num eip-rate' . esc_attr( $rate_class ) . '">' . $rate_label . '</td>';
 				$output .= '</tr>';
 			}
 
