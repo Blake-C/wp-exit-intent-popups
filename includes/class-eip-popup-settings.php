@@ -26,6 +26,8 @@ class EIP_Popup_Settings {
 		'_eip_size'           => 'string',
 		'_eip_overlay_click'  => 'boolean',
 		'_eip_theme'          => 'string',
+		'_eip_start_date'     => 'string',
+		'_eip_end_date'       => 'string',
 	);
 
 	/**
@@ -188,6 +190,22 @@ class EIP_Popup_Settings {
 		$output .= '</select>';
 		$output .= '</div>';
 
+		// Schedule: start / end dates.
+		$start_date = get_post_meta( $post->ID, '_eip_start_date', true );
+		$end_date   = get_post_meta( $post->ID, '_eip_end_date', true );
+
+		$output .= '<div class="eip-field">';
+		$output .= '<label for="eip_start_date">' . esc_html__( 'Start Date', 'wp-exit-intent-popups' ) . '</label>';
+		$output .= '<input type="date" id="eip_start_date" name="eip_start_date" value="' . esc_attr( $start_date ) . '" />';
+		$output .= '<p class="description">' . esc_html__( 'Leave blank to show immediately.', 'wp-exit-intent-popups' ) . '</p>';
+		$output .= '</div>';
+
+		$output .= '<div class="eip-field">';
+		$output .= '<label for="eip_end_date">' . esc_html__( 'End Date', 'wp-exit-intent-popups' ) . '</label>';
+		$output .= '<input type="date" id="eip_end_date" name="eip_end_date" value="' . esc_attr( $end_date ) . '" />';
+		$output .= '<p class="description">' . esc_html__( 'Leave blank for no expiry.', 'wp-exit-intent-popups' ) . '</p>';
+		$output .= '</div>';
+
 		$output .= '</div>'; // .eip-meta-fields
 
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- all values escaped above
@@ -259,5 +277,17 @@ class EIP_Popup_Settings {
 			$theme = 'light';
 		}
 		update_post_meta( $post_id, '_eip_theme', $theme );
+
+		// Schedule dates — stored as YYYY-MM-DD strings, empty means no restriction.
+		foreach ( array(
+			'eip_start_date' => '_eip_start_date',
+			'eip_end_date'   => '_eip_end_date',
+		) as $field => $meta_key ) {
+			$value = isset( $_POST[ $field ] ) ? sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) : '';
+			if ( $value && ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ) {
+				$value = '';
+			}
+			update_post_meta( $post_id, $meta_key, $value );
+		}
 	}
 }

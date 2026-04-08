@@ -209,6 +209,25 @@ class EIP_Frontend {
 			)
 		);
 
+		// Filter out popups outside their scheduled date range.
+		$today  = wp_date( 'Y-m-d' );
+		$popups = array_values(
+			array_filter(
+				$popups,
+				function ( $popup ) use ( $today ) {
+					$start = get_post_meta( $popup->ID, '_eip_start_date', true );
+					$end   = get_post_meta( $popup->ID, '_eip_end_date', true );
+					if ( $start && $today < $start ) {
+						return false;
+					}
+					if ( $end && $today > $end ) {
+						return false;
+					}
+					return true;
+				}
+			)
+		);
+
 		wp_cache_set( $cache_key, $popups, 'eip' );
 		return $popups;
 	}
