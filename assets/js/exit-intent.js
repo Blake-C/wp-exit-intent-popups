@@ -3,15 +3,18 @@
  *
  * Handles exit intent detection, auto-appear timers, A/B popup selection,
  * frequency management via localStorage/sessionStorage, event tracking,
- * and GA4 integration.
+ * GA4 integration, and focus trapping within open modals.
  */
 ( function () {
 	'use strict';
 
-	const cfg    = window.eipConfig || {};
-	const REST   = cfg.restUrl || '';
-	const NONCE  = cfg.nonce || '';
-	const PAGE   = cfg.pageId || 0;
+	const cfg         = window.eipConfig || {};
+	const REST        = cfg.restUrl     || '';
+	const NONCE       = cfg.nonce       || '';
+	const PAGE        = cfg.pageId      || 0;
+	const GA4_SHOWN   = cfg.ga4Shown    || 'eip_popup_shown';
+	const GA4_CLOSED  = cfg.ga4Closed   || 'eip_popup_closed';
+	const GA4_CTA     = cfg.ga4CtaClick || 'eip_cta_click';
 
 	/* -----------------------------------------------------------------------
 	 * Storage helpers
@@ -104,10 +107,60 @@
 	}
 
 	/* -----------------------------------------------------------------------
+	 * Focus trap
+	 * --------------------------------------------------------------------- */
+
+	const FOCUSABLE = [
+		'a[href]',
+		'button:not([disabled])',
+		'input:not([disabled])',
+		'select:not([disabled])',
+		'textarea:not([disabled])',
+		'[tabindex]:not([tabindex="-1"])',
+	].join( ',' );
+
+	/**
+	 * Return a handler that traps Tab / Shift+Tab within the given modal element.
+	 *
+	 * @param {HTMLElement} modal
+	 * @return {Function}
+	 */
+	function buildFocusTrap( modal ) {
+		return function trapFocus( e ) {
+			if ( e.key !== 'Tab' ) return;
+
+			const focusable = Array.from( modal.querySelectorAll( FOCUSABLE ) ).filter(
+				function ( el ) { return ! el.closest( '[hidden]' ); }
+			);
+
+			if ( ! focusable.length ) {
+				e.preventDefault();
+				return;
+			}
+
+			const first = focusable[ 0 ];
+			const last  = focusable[ focusable.length - 1 ];
+
+			if ( e.shiftKey ) {
+				if ( document.activeElement === first ) {
+					e.preventDefault();
+					last.focus();
+				}
+			} else {
+				if ( document.activeElement === last ) {
+					e.preventDefault();
+					first.focus();
+				}
+			}
+		};
+	}
+
+	/* -----------------------------------------------------------------------
 	 * Modal open / close
 	 * --------------------------------------------------------------------- */
 
 	let activeModal    = null;
+	let activeTrapFn   = null;
 	let lastCursorX    = null;
 	let lastCursorY    = null;
 
@@ -136,8 +189,19 @@
 		document.body.classList.add( 'eip-modal-open' );
 		activeModal = wrapper;
 
-		// Focus the modal for accessibility.
-		if ( modal ) modal.focus();
+		// Move focus into the modal — first focusable element or the panel itself.
+		if ( modal ) {
+			const firstFocusable = modal.querySelector( FOCUSABLE );
+			if ( firstFocusable ) {
+				firstFocusable.focus();
+			} else {
+				modal.focus();
+			}
+
+			// Attach and store the focus trap so we can remove it on close.
+			activeTrapFn = buildFocusTrap( modal );
+			modal.addEventListener( 'keydown', activeTrapFn );
+		}
 
 		// Close button.
 		const closeBtn = wrapper.querySelector( '.eip-modal__close' );
@@ -166,17 +230,25 @@
 			link.addEventListener( 'click', function () {
 				store.set( 'eip_converted_' + popupId, '1' );
 				trackEvent( popupId, 'conversion' );
-				ga4Event( 'eip_cta_click', { popup_id: popupId, page_id: PAGE } );
+				ga4Event( GA4_CTA, { popup_id: popupId, page_id: PAGE } );
 			} );
 		} );
 
 		markShown( wrapper );
 		trackEvent( popupId, 'impression' );
-		ga4Event( 'eip_popup_shown', { popup_id: popupId, page_id: PAGE } );
+		ga4Event( GA4_SHOWN, { popup_id: popupId, page_id: PAGE } );
 	}
 
 	function closeModal( wrapper ) {
 		const popupId = parseInt( wrapper.dataset.popupId, 10 );
+		const modal   = wrapper.querySelector( '.eip-modal' );
+
+		// Remove focus trap.
+		if ( modal && activeTrapFn ) {
+			modal.removeEventListener( 'keydown', activeTrapFn );
+			activeTrapFn = null;
+		}
+
 		wrapper.classList.remove( 'eip-is-active' );
 		wrapper.setAttribute( 'aria-hidden', 'true' );
 		document.body.classList.remove( 'eip-modal-open' );
@@ -184,7 +256,7 @@
 		activeModal = null;
 
 		trackEvent( popupId, 'close' );
-		ga4Event( 'eip_popup_closed', { popup_id: popupId, page_id: PAGE } );
+		ga4Event( GA4_CLOSED, { popup_id: popupId, page_id: PAGE } );
 	}
 
 	function handleEsc( e ) {
@@ -210,8 +282,8 @@
 	const delay      = parseInt( selected.dataset.delay, 10 ) || 0;
 	const autoAppear = parseInt( selected.dataset.autoAppear, 10 ) || 0;
 
-	let delayPassed      = delay === 0;
-	let popupTriggered   = false;
+	let delayPassed    = delay === 0;
+	let popupTriggered = false;
 
 	// Track cursor position for 'cursor' position mode.
 	document.addEventListener( 'mousemove', function ( e ) {
@@ -229,7 +301,6 @@
 	// Exit intent: mouse leaves the top of the viewport.
 	document.addEventListener( 'mouseleave', function ( e ) {
 		if ( popupTriggered || ! delayPassed || activeModal ) return;
-		// Trigger only when leaving from the top edge.
 		if ( e.clientY <= 5 ) {
 			popupTriggered = true;
 			openModal( selected );
