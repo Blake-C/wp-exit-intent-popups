@@ -228,8 +228,8 @@ class EIP_Admin {
 			fputcsv(
 				$handle,
 				array(
-					$row['popup_title'],
-					$row['page_title'],
+					self::sanitize_csv_cell( $row['popup_title'] ),
+					self::sanitize_csv_cell( $row['page_title'] ),
 					$row['impressions'],
 					$row['conversions'],
 					$row['closes'],
@@ -241,5 +241,23 @@ class EIP_Admin {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 		fclose( $handle );
 		exit;
+	}
+
+	/**
+	 * Prevent CSV injection by prefixing cells that start with formula-trigger characters.
+	 *
+	 * Spreadsheet applications (Excel, LibreOffice) treat cells starting with =, +, -, or @
+	 * as formulas. Prefixing with a tab character neutralises this without altering the
+	 * visible text in most applications.
+	 *
+	 * @param string $value Raw cell value.
+	 * @return string Sanitized cell value.
+	 */
+	private static function sanitize_csv_cell( $value ) {
+		$value = (string) $value;
+		if ( '' !== $value && in_array( $value[0], array( '=', '+', '-', '@', "\t", "\r" ), true ) ) {
+			$value = "\t" . $value;
+		}
+		return $value;
 	}
 }
