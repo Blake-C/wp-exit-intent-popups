@@ -41,7 +41,8 @@ class EIP_AB_Testing {
 			PRIMARY KEY (id),
 			KEY popup_id (popup_id),
 			KEY page_id (page_id),
-			KEY event_type (event_type)
+			KEY event_type (event_type),
+			KEY popup_page_event (popup_id, page_id, event_type)
 		) {$charset_collate};";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';

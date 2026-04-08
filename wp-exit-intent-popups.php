@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'EIP_VERSION', '1.0.0' );
 define( 'EIP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'EIP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'EIP_DB_VERSION', '1.0' );
+define( 'EIP_DB_VERSION', '1.1' );
 
 require_once EIP_PLUGIN_DIR . 'includes/class-eip-post-type.php';
 require_once EIP_PLUGIN_DIR . 'includes/class-eip-popup-settings.php';
@@ -43,6 +43,10 @@ function eip_activate() {
  * Initialise all plugin classes.
  */
 function eip_init() {
+	if ( get_option( 'eip_db_version' ) !== EIP_DB_VERSION ) {
+		EIP_AB_Testing::create_table();
+	}
+
 	( new EIP_Post_Type() )->register();
 	( new EIP_Popup_Settings() )->register();
 	( new EIP_Page_Assignment() )->register();
