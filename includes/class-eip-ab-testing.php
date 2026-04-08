@@ -87,6 +87,18 @@ class EIP_AB_Testing {
 
 		register_rest_route(
 			'eip/v1',
+			'/events',
+			array(
+				'methods'             => 'DELETE',
+				'callback'            => array( $this, 'clear_events' ),
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+			)
+		);
+
+		register_rest_route(
+			'eip/v1',
 			'/results',
 			array(
 				'methods'             => 'GET',
@@ -102,6 +114,32 @@ class EIP_AB_Testing {
 				),
 			)
 		);
+	}
+
+	/**
+	 * REST callback: truncate the events table.
+	 *
+	 * Requires manage_options capability (enforced in permission_callback).
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function clear_events() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . self::TABLE_SUFFIX;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- TRUNCATE on plugin-owned table; no user input.
+		$result = $wpdb->query( "TRUNCATE TABLE {$table_name}" );
+
+		if ( false === $result ) {
+			return new WP_Error(
+				'db_error',
+				__( 'Could not clear event data.', 'wp-exit-intent-popups' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return rest_ensure_response( array( 'success' => true ) );
 	}
 
 	/**

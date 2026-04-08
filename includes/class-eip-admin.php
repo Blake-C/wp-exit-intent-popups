@@ -73,8 +73,12 @@ class EIP_Admin {
 			'eip-admin',
 			'eipAdmin',
 			array(
-				'restUrl' => esc_url_raw( rest_url( 'eip/v1/results' ) ),
-				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'restUrl'       => esc_url_raw( rest_url( 'eip/v1/results' ) ),
+				'deleteUrl'     => esc_url_raw( rest_url( 'eip/v1/events' ) ),
+				'nonce'         => wp_create_nonce( 'wp_rest' ),
+				'confirmClear'  => __( 'Are you sure you want to delete all A/B test data? This cannot be undone.', 'wp-exit-intent-popups' ),
+				'clearingLabel' => __( 'Clearing\u2026', 'wp-exit-intent-popups' ),
+				'clearErrorMsg' => __( 'An error occurred. Please try again.', 'wp-exit-intent-popups' ),
 			)
 		);
 	}
@@ -102,6 +106,9 @@ class EIP_Admin {
 
 		$output  = '<div class="wrap eip-results-wrap">';
 		$output .= '<h1 class="wp-heading-inline">' . esc_html__( 'A/B Test Results', 'wp-exit-intent-popups' ) . '</h1>';
+		$output .= '<button id="eip-clear-data" class="page-title-action eip-clear-btn"' . ( empty( $all_results ) ? ' disabled' : '' ) . '>';
+		$output .= esc_html__( 'Clear All Data', 'wp-exit-intent-popups' );
+		$output .= '</button>';
 		$output .= '<hr class="wp-header-end">';
 
 		// Filter form.
