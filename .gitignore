@@ -1,0 +1,78 @@
+data
+.env
+/vendor
+
+### Docker ###
+docker_php_error_log
+/data/*/*
+/ejected/*/*
+/html/
+/logs/**/*
+
+### Bower ###
+bower_components
+
+### Vagrant stuff ###
+.vagrant
+acceptance_config.yml
+vagrant-spec.config.rb
+
+### OSX ###
+.AppleDouble
+.DS_Store
+.LSOverride
+
+### Icon must end with two \r ###
+Icon
+
+### Thumbnails ###
+._*
+
+### Files that might appear on external disk ###
+.Spotlight-V100
+.Trashes
+
+### Directories potentially created on remote AFP share ###
+.apdisk
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+
+### Videos ###
+*.wmv
+*.mpg
+*.mpeg
+*.mp4
+*.mov
+*.flv
+*.avi
+*.ogv
+*.ogg
+*.webm
+
+### Audio ###
+*.wav
+*.mp3
+*.wma
+
+### Created by http://www.gitignore.io ###
+*.css.map
+*.log
+*.sql
+*.zip
+.phpintel
+.phpcs.cache
+.sass-cache
+.tmp
+advanced-cache.php
+cache
+.cache
+*.cache
+db.php
+dist
+node_modules
+npm-debug.log
+object-cache.php
+.idea
+.pnpm-store
