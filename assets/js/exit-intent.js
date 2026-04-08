@@ -301,7 +301,7 @@
 	// Exit intent: mouse leaves the top of the viewport.
 	document.addEventListener( 'mouseleave', function ( e ) {
 		if ( popupTriggered || ! delayPassed || activeModal ) return;
-		if ( e.clientY <= 5 ) {
+		if ( e.clientY <= 0 ) {
 			popupTriggered = true;
 			openModal( selected );
 		}
