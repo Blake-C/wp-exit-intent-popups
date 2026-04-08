@@ -20,6 +20,7 @@ class EIP_Admin {
 	public function register() {
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		add_action( 'admin_action_eip_export_csv', array( $this, 'export_csv' ) );
 	}
 
 	/**
@@ -107,13 +108,20 @@ class EIP_Admin {
 			wp_verify_nonce( sanitize_key( $_GET['eip_filter_nonce'] ), 'eip_ab_filter' ) ) {
 			$filter_page_id = absint( $_GET['filter_page_id'] );
 		}
-		$results = $filter_page_id ? EIP_AB_Testing::get_results_raw( $filter_page_id ) : $all_results;
+		$results    = $filter_page_id ? EIP_AB_Testing::get_results_raw( $filter_page_id ) : $all_results;
+		$export_url = wp_nonce_url(
+			admin_url( 'admin.php?action=eip_export_csv' . ( $filter_page_id ? '&filter_page_id=' . $filter_page_id : '' ) ),
+			'eip_export_csv'
+		);
 
 		$output  = '<div class="wrap eip-results-wrap">';
 		$output .= '<h1 class="wp-heading-inline">' . esc_html__( 'A/B Test Results', 'wp-exit-intent-popups' ) . '</h1>';
 		$output .= '<button id="eip-clear-data" class="page-title-action eip-clear-btn"' . ( empty( $all_results ) ? ' disabled' : '' ) . '>';
 		$output .= esc_html__( 'Clear All Data', 'wp-exit-intent-popups' );
 		$output .= '</button>';
+		$output .= '<a href="' . esc_url( $export_url ) . '" class="page-title-action"' . ( empty( $results ) ? ' aria-disabled="true" style="pointer-events:none;opacity:.5;"' : '' ) . '>';
+		$output .= esc_html__( 'Export CSV', 'wp-exit-intent-popups' );
+		$output .= '</a>';
 		$output .= '<hr class="wp-header-end">';
 
 		// Filter form.
@@ -179,5 +187,58 @@ class EIP_Admin {
 
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- all values escaped above
 		echo $output;
+	}
+
+	/**
+	 * Stream A/B test results as a CSV file download.
+	 *
+	 * Triggered by admin_action_eip_export_csv. Respects the same
+	 * filter_page_id parameter as the results page.
+	 */
+	public function export_csv() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to export data.', 'wp-exit-intent-popups' ) );
+		}
+
+		$nonce = isset( $_GET['_wpnonce'] ) ? sanitize_key( $_GET['_wpnonce'] ) : '';
+		if ( ! wp_verify_nonce( $nonce, 'eip_export_csv' ) ) {
+			wp_die( esc_html__( 'Security check failed.', 'wp-exit-intent-popups' ) );
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified above via eip_export_csv action.
+		$page_id = isset( $_GET['filter_page_id'] ) ? absint( $_GET['filter_page_id'] ) : 0;
+		$results = EIP_AB_Testing::get_results_raw( $page_id );
+
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="ab-results-' . gmdate( 'Y-m-d' ) . '.csv"' );
+		header( 'Pragma: no-cache' );
+		header( 'Expires: 0' );
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- streaming to php://output, not a file.
+		$handle = fopen( 'php://output', 'w' );
+		// UTF-8 BOM so Excel opens without a character-set dialog.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
+		fwrite( $handle, "\xEF\xBB\xBF" );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fputcsv
+		fputcsv( $handle, array( 'Popup', 'Page / Post', 'Impressions', 'Conversions', 'Closes', 'Conv. Rate (%)' ) );
+
+		foreach ( $results as $row ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fputcsv
+			fputcsv(
+				$handle,
+				array(
+					$row['popup_title'],
+					$row['page_title'],
+					$row['impressions'],
+					$row['conversions'],
+					$row['closes'],
+					$row['rate'],
+				)
+			);
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		fclose( $handle );
+		exit;
 	}
 }
