@@ -23,6 +23,7 @@ define( 'EIP_DB_VERSION', '1.0' );
 require_once EIP_PLUGIN_DIR . 'includes/class-eip-post-type.php';
 require_once EIP_PLUGIN_DIR . 'includes/class-eip-popup-settings.php';
 require_once EIP_PLUGIN_DIR . 'includes/class-eip-page-assignment.php';
+require_once EIP_PLUGIN_DIR . 'includes/class-eip-settings.php';
 require_once EIP_PLUGIN_DIR . 'includes/class-eip-frontend.php';
 require_once EIP_PLUGIN_DIR . 'includes/class-eip-ab-testing.php';
 require_once EIP_PLUGIN_DIR . 'includes/class-eip-admin.php';
@@ -45,6 +46,7 @@ function eip_init() {
 	( new EIP_Post_Type() )->register();
 	( new EIP_Popup_Settings() )->register();
 	( new EIP_Page_Assignment() )->register();
+	( new EIP_Settings() )->register();
 	( new EIP_Frontend() )->register();
 	( new EIP_AB_Testing() )->register();
 	( new EIP_Admin() )->register();
