@@ -37,6 +37,24 @@
 	}
 
 	/* ------------------------------------------------------------------
+	   Pages / Posts list — show popup selector when bulk action is chosen
+	   ------------------------------------------------------------------ */
+
+	var $bulkSelector = $( '#eip-bulk-popup-selector' );
+
+	if ( $bulkSelector.length ) {
+		$( '#bulk-action-selector-top, #bulk-action-selector-bottom' ).on( 'change', function () {
+			var isAssign = $( '#bulk-action-selector-top' ).val() === 'eip_assign_popup' ||
+				$( '#bulk-action-selector-bottom' ).val() === 'eip_assign_popup';
+			if ( isAssign ) {
+				$bulkSelector.show();
+			} else {
+				$bulkSelector.hide();
+			}
+		} );
+	}
+
+	/* ------------------------------------------------------------------
 	   A/B Results page — Clear All Data
 	   ------------------------------------------------------------------ */
 

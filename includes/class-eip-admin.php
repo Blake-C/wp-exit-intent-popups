@@ -49,8 +49,9 @@ class EIP_Admin {
 
 		$is_cpt_screen   = 'exit_intent_popup' === $screen->post_type;
 		$is_results_page = 'exit_intent_popup_page_eip-ab-results' === $hook;
+		$is_list_screen  = 'edit.php' === $hook && in_array( $screen->post_type, array( 'post', 'page' ), true );
 
-		if ( ! $is_cpt_screen && ! $is_results_page ) {
+		if ( ! $is_cpt_screen && ! $is_results_page && ! $is_list_screen ) {
 			return;
 		}
 

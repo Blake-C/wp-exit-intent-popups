@@ -20,12 +20,27 @@ class EIP_Page_Assignment {
 	const SUPPORTED_POST_TYPES = array( 'post', 'page' );
 
 	/**
+	 * Prevents the bulk popup selector from being rendered twice (top + bottom of list table).
+	 *
+	 * @var bool
+	 */
+	private static $bulk_selector_rendered = false;
+
+	/**
 	 * Hook into WordPress.
 	 */
 	public function register() {
 		add_action( 'init', array( $this, 'register_meta' ) );
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
 		add_action( 'save_post', array( $this, 'save_meta' ) );
+
+		// Bulk assignment hooks.
+		foreach ( self::SUPPORTED_POST_TYPES as $post_type ) {
+			add_filter( 'bulk_actions-edit-' . $post_type, array( $this, 'register_bulk_actions' ) );
+			add_filter( 'handle_bulk_actions-edit-' . $post_type, array( $this, 'handle_bulk_assign' ), 10, 3 );
+		}
+		add_action( 'restrict_manage_posts', array( $this, 'render_bulk_popup_selector' ) );
+		add_action( 'admin_notices', array( $this, 'bulk_action_notice' ) );
 	}
 
 	/**
@@ -110,6 +125,143 @@ class EIP_Page_Assignment {
 
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- all values escaped above
 		echo $output;
+	}
+
+	/**
+	 * Add the "Assign Exit Intent Popup" option to the bulk actions dropdown.
+	 *
+	 * @param array $bulk_actions Existing bulk actions.
+	 * @return array
+	 */
+	public function register_bulk_actions( $bulk_actions ) {
+		$bulk_actions['eip_assign_popup'] = __( 'Assign Exit Intent Popup', 'wp-exit-intent-popups' );
+		return $bulk_actions;
+	}
+
+	/**
+	 * Render the popup selector that appears alongside the bulk actions form.
+	 * Uses a static flag so it only outputs once despite being called for both
+	 * the top and bottom table nav areas.
+	 *
+	 * @param string $post_type Current list-table post type.
+	 */
+	public function render_bulk_popup_selector( $post_type ) {
+		if ( self::$bulk_selector_rendered ) {
+			return;
+		}
+		if ( ! in_array( $post_type, self::SUPPORTED_POST_TYPES, true ) ) {
+			return;
+		}
+
+		$popups = get_posts(
+			array(
+				'post_type'      => 'exit_intent_popup',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+			)
+		);
+
+		if ( empty( $popups ) ) {
+			return;
+		}
+
+		self::$bulk_selector_rendered = true;
+
+		$output  = '<select name="eip_bulk_popup_id" id="eip-bulk-popup-selector" style="display:none;">';
+		$output .= '<option value="">' . esc_html__( '— Select Popup —', 'wp-exit-intent-popups' ) . '</option>';
+		foreach ( $popups as $popup ) {
+			$output .= '<option value="' . esc_attr( $popup->ID ) . '">' . esc_html( $popup->post_title ) . '</option>';
+		}
+		$output .= '</select>';
+
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- all values escaped above
+		echo $output;
+	}
+
+	/**
+	 * Process the bulk "Assign Exit Intent Popup" action.
+	 *
+	 * @param string $redirect_url Redirect URL after bulk action.
+	 * @param string $action       Current bulk action slug.
+	 * @param int[]  $post_ids     Selected post IDs.
+	 * @return string
+	 */
+	public function handle_bulk_assign( $redirect_url, $action, $post_ids ) {
+		if ( 'eip_assign_popup' !== $action ) {
+			return $redirect_url;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WordPress verifies the bulk action nonce before firing handle_bulk_actions; no additional nonce required here.
+		$popup_id = isset( $_REQUEST['eip_bulk_popup_id'] ) ? absint( $_REQUEST['eip_bulk_popup_id'] ) : 0;
+		if ( ! $popup_id ) {
+			return add_query_arg( 'eip_bulk_error', 'no_popup', $redirect_url );
+		}
+
+		$popup = get_post( $popup_id );
+		if ( ! $popup || 'exit_intent_popup' !== $popup->post_type ) {
+			return add_query_arg( 'eip_bulk_error', 'invalid_popup', $redirect_url );
+		}
+
+		$count = 0;
+		foreach ( $post_ids as $post_id ) {
+			$post_id = (int) $post_id;
+			if ( ! current_user_can( 'edit_post', $post_id ) ) {
+				continue;
+			}
+			$assigned = get_post_meta( $post_id, '_eip_assigned_popups', true );
+			if ( ! is_array( $assigned ) ) {
+				$assigned = array();
+			}
+			$assigned = array_map( 'intval', $assigned );
+			if ( ! in_array( $popup_id, $assigned, true ) ) {
+				$assigned[] = $popup_id;
+				update_post_meta( $post_id, '_eip_assigned_popups', array_values( $assigned ) );
+				++$count;
+			}
+		}
+
+		return add_query_arg( 'eip_bulk_assigned', $count, $redirect_url );
+	}
+
+	/**
+	 * Show an admin notice after a bulk assignment action.
+	 */
+	public function bulk_action_notice() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- query params set by our own add_query_arg() redirect, not user-controlled form input.
+		if ( isset( $_GET['eip_bulk_assigned'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- same as above.
+			$count = absint( $_GET['eip_bulk_assigned'] );
+			printf(
+				'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+				esc_html(
+					sprintf(
+						/* translators: %d: number of pages updated */
+						_n(
+							'Exit intent popup assigned to %d page.',
+							'Exit intent popup assigned to %d pages.',
+							$count,
+							'wp-exit-intent-popups'
+						),
+						$count
+					)
+				)
+			);
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- query params set by our own add_query_arg() redirect, not user-controlled form input.
+		if ( isset( $_GET['eip_bulk_error'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- same as above.
+			$error = sanitize_key( $_GET['eip_bulk_error'] );
+			$msg   = 'no_popup' === $error
+				? __( 'Please select a popup before applying the bulk action.', 'wp-exit-intent-popups' )
+				: __( 'Invalid popup selected.', 'wp-exit-intent-popups' );
+			printf(
+				'<div class="notice notice-error is-dismissible"><p>%s</p></div>',
+				esc_html( $msg )
+			);
+		}
 	}
 
 	/**
