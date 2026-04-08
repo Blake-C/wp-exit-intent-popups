@@ -290,10 +290,19 @@
 	let delayPassed    = delay === 0;
 	let popupTriggered = false;
 
-	// Track cursor position for 'cursor' position mode.
+	// Track cursor position for 'cursor' position mode — throttled via rAF so
+	// we are not updating two variables on every pixel of mouse movement.
+	let rafPending  = false;
+	let pendingMove = null;
 	document.addEventListener( 'mousemove', function ( e ) {
-		lastCursorX = e.clientX;
-		lastCursorY = e.clientY;
+		pendingMove = e;
+		if ( rafPending ) return;
+		rafPending = true;
+		requestAnimationFrame( function () {
+			lastCursorX = pendingMove.clientX;
+			lastCursorY = pendingMove.clientY;
+			rafPending  = false;
+		} );
 	} );
 
 	// Enable exit intent after the configured delay.
