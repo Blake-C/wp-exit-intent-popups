@@ -120,13 +120,13 @@ class EIP_Frontend {
 		$frequency      = $frequency ? $frequency : 'session';
 		$frequency_days = (int) get_post_meta( $post_id, '_eip_frequency_days', true );
 		$frequency_days = $frequency_days ? $frequency_days : 7;
-		$position       = get_post_meta( $post_id, '_eip_position', true );
-		$position       = $position ? $position : 'center';
-		$size           = get_post_meta( $post_id, '_eip_size', true );
-		$size           = $size ? $size : 'medium';
+		$position_raw   = get_post_meta( $post_id, '_eip_position', true );
+		$position       = in_array( $position_raw, array( 'center', 'top', 'bottom', 'left', 'right', 'cursor' ), true ) ? $position_raw : 'center';
+		$size_raw       = get_post_meta( $post_id, '_eip_size', true );
+		$size           = in_array( $size_raw, array( 'small', 'medium', 'large' ), true ) ? $size_raw : 'medium';
 		$overlay_click  = (bool) get_post_meta( $post_id, '_eip_overlay_click', true );
-		$theme          = get_post_meta( $post_id, '_eip_theme', true );
-		$theme          = $theme ? $theme : 'light';
+		$theme_raw      = get_post_meta( $post_id, '_eip_theme', true );
+		$theme          = in_array( $theme_raw, array( 'light', 'dark' ), true ) ? $theme_raw : 'light';
 
 		// Run content through the_content to render Gutenberg blocks.
 		$content = apply_filters( 'the_content', $popup->post_content );
