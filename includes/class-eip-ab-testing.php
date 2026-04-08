@@ -263,12 +263,26 @@ class EIP_AB_Testing {
 
 		$data = array();
 
+		// Deduplicate IDs and prime a local cache using get_post() — which has no
+		// post_type/status restrictions — to avoid N+1 queries in the loop below.
+		$popup_ids = array_unique( array_map( 'intval', wp_list_pluck( $rows, 'popup_id' ) ) );
+		$page_ids  = array_unique( array_filter( array_map( 'intval', wp_list_pluck( $rows, 'page_id' ) ) ) );
+		$all_ids   = array_unique( array_merge( $popup_ids, $page_ids ) );
+
+		$posts_cache = array();
+		foreach ( $all_ids as $id ) {
+			$post = get_post( $id );
+			if ( $post ) {
+				$posts_cache[ $id ] = $post;
+			}
+		}
+
 		foreach ( $rows as $row ) {
 			$key = $row->popup_id . '_' . $row->page_id;
 
 			if ( ! isset( $data[ $key ] ) ) {
-				$popup        = get_post( $row->popup_id );
-				$page         = get_post( $row->page_id );
+				$popup        = $posts_cache[ (int) $row->popup_id ] ?? null;
+				$page         = $posts_cache[ (int) $row->page_id ] ?? null;
 				$data[ $key ] = array(
 					'popup_id'    => (int) $row->popup_id,
 					'popup_title' => $popup ? $popup->post_title : '',
