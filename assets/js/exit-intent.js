@@ -321,6 +321,27 @@
 		}
 	} );
 
+	// Mobile / touch: scroll-reversal exit-intent heuristic.
+	// mouseleave never fires on touch devices, so watch for a rapid upward
+	// scroll after the user has scrolled at least 100px down the page.
+	if ( 'ontouchstart' in window ) {
+		let lastScrollY = window.scrollY;
+		let maxScrollY  = window.scrollY;
+
+		document.addEventListener( 'scroll', function () {
+			const current = window.scrollY;
+			if ( current > maxScrollY ) {
+				maxScrollY = current;
+			}
+			if ( ! popupTriggered && delayPassed && ! activeModal &&
+				maxScrollY >= 100 && lastScrollY - current >= 50 ) {
+				popupTriggered = true;
+				openModal( selected );
+			}
+			lastScrollY = current;
+		}, { passive: true } );
+	}
+
 	// Auto-appear timer (independent of exit intent delay).
 	if ( autoAppear > 0 ) {
 		setTimeout( function () {
