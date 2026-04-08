@@ -101,8 +101,12 @@ class EIP_Admin {
 			}
 		}
 
-		$filter_page_id = isset( $_GET['filter_page_id'] ) ? absint( $_GET['filter_page_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$results        = $filter_page_id ? EIP_AB_Testing::get_results_raw( $filter_page_id ) : $all_results;
+		$filter_page_id = 0;
+		if ( isset( $_GET['filter_page_id'], $_GET['eip_filter_nonce'] ) &&
+			wp_verify_nonce( sanitize_key( $_GET['eip_filter_nonce'] ), 'eip_ab_filter' ) ) {
+			$filter_page_id = absint( $_GET['filter_page_id'] );
+		}
+		$results = $filter_page_id ? EIP_AB_Testing::get_results_raw( $filter_page_id ) : $all_results;
 
 		$output  = '<div class="wrap eip-results-wrap">';
 		$output .= '<h1 class="wp-heading-inline">' . esc_html__( 'A/B Test Results', 'wp-exit-intent-popups' ) . '</h1>';
@@ -115,6 +119,7 @@ class EIP_Admin {
 		$output .= '<form method="get" class="eip-filter-form">';
 		$output .= '<input type="hidden" name="post_type" value="exit_intent_popup" />';
 		$output .= '<input type="hidden" name="page" value="eip-ab-results" />';
+		$output .= wp_nonce_field( 'eip_ab_filter', 'eip_filter_nonce', true, false );
 		$output .= '<label for="filter_page_id">' . esc_html__( 'Filter by Page / Post:', 'wp-exit-intent-popups' ) . '</label> ';
 		$output .= '<select name="filter_page_id" id="filter_page_id">';
 		$output .= '<option value="">' . esc_html__( '— All Pages —', 'wp-exit-intent-popups' ) . '</option>';
