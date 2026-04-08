@@ -37,12 +37,16 @@
 	}
 
 	/* ------------------------------------------------------------------
-	   Pages / Posts list — show popup selector when bulk action is chosen
+	   Pages / Posts list — popup selector for bulk assign action
 	   ------------------------------------------------------------------ */
 
 	var $bulkSelector = $( '#eip-bulk-popup-selector' );
 
 	if ( $bulkSelector.length ) {
+		// Move the selector from the filter area to sit right after the top
+		// Apply button so it is visually connected to the bulk action controls.
+		$( '#doaction' ).after( $bulkSelector );
+
 		$( '#bulk-action-selector-top, #bulk-action-selector-bottom' ).on( 'change', function () {
 			var isAssign = $( '#bulk-action-selector-top' ).val() === 'eip_assign_popup' ||
 				$( '#bulk-action-selector-bottom' ).val() === 'eip_assign_popup';
@@ -50,6 +54,18 @@
 				$bulkSelector.show();
 			} else {
 				$bulkSelector.hide();
+			}
+		} );
+
+		// Prevent submitting the assign action without a popup selected.
+		$( '#posts-filter' ).on( 'submit', function ( e ) {
+			var action = $( '#bulk-action-selector-top' ).val() !== '-1'
+				? $( '#bulk-action-selector-top' ).val()
+				: $( '#bulk-action-selector-bottom' ).val();
+			if ( action === 'eip_assign_popup' && ! $bulkSelector.val() ) {
+				// eslint-disable-next-line no-alert
+				window.alert( cfg.selectPopupLabel || 'Please select a popup before applying.' );
+				e.preventDefault();
 			}
 		} );
 	}
