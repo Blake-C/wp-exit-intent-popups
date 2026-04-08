@@ -38,6 +38,9 @@ class EIP_Frontend {
 			EIP_VERSION
 		);
 
+		// Output CSS custom properties derived from the global settings.
+		wp_add_inline_style( 'eip-modal', $this->build_css_vars() );
+
 		wp_enqueue_script(
 			'eip-exit-intent',
 			EIP_PLUGIN_URL . 'assets/js/exit-intent.js',
@@ -46,15 +49,48 @@ class EIP_Frontend {
 			true
 		);
 
+		$settings = EIP_Settings::get();
+
 		wp_localize_script(
 			'eip-exit-intent',
 			'eipConfig',
 			array(
-				'restUrl' => esc_url_raw( rest_url( 'eip/v1/event' ) ),
-				'nonce'   => wp_create_nonce( 'wp_rest' ),
-				'pageId'  => get_the_ID(),
+				'restUrl'     => esc_url_raw( rest_url( 'eip/v1/event' ) ),
+				'nonce'       => wp_create_nonce( 'wp_rest' ),
+				'pageId'      => get_the_ID(),
+				'ga4Shown'    => sanitize_text_field( $settings['ga4_shown'] ),
+				'ga4Closed'   => sanitize_text_field( $settings['ga4_closed'] ),
+				'ga4CtaClick' => sanitize_text_field( $settings['ga4_cta_click'] ),
 			)
 		);
+	}
+
+	/**
+	 * Build a :root { } CSS block containing custom properties from settings.
+	 *
+	 * @return string
+	 */
+	private function build_css_vars() {
+		$s = EIP_Settings::get();
+
+		$overlay_rgba = EIP_Settings::hex_to_rgba(
+			$s['overlay_color'],
+			$s['overlay_opacity']
+		);
+
+		$vars  = ':root{';
+		$vars .= '--eip-light-bg:' . sanitize_hex_color( $s['light_bg_color'] ) . ';';
+		$vars .= '--eip-light-color:' . sanitize_hex_color( $s['light_text_color'] ) . ';';
+		$vars .= '--eip-dark-bg:' . sanitize_hex_color( $s['dark_bg_color'] ) . ';';
+		$vars .= '--eip-dark-color:' . sanitize_hex_color( $s['dark_text_color'] ) . ';';
+		$vars .= '--eip-overlay-bg:' . $overlay_rgba . ';';
+		$vars .= '--eip-radius:' . absint( $s['border_radius'] ) . 'px;';
+		$vars .= '--eip-size-small:' . absint( $s['size_small'] ) . 'px;';
+		$vars .= '--eip-size-medium:' . absint( $s['size_medium'] ) . 'px;';
+		$vars .= '--eip-size-large:' . absint( $s['size_large'] ) . 'px;';
+		$vars .= '}';
+
+		return $vars;
 	}
 
 	/**

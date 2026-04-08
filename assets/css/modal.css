@@ -1,6 +1,22 @@
 /* ==========================================================================
    Exit Intent Popup — Modal Styles
+   CSS custom properties are set on :root by the plugin's frontend class
+   using values from the global Settings page.
    ========================================================================== */
+
+/* Default custom property values — overridden by inline :root block
+   output by EIP_Frontend when settings differ from these defaults. */
+:root {
+	--eip-light-bg:      #ffffff;
+	--eip-light-color:   #333333;
+	--eip-dark-bg:       #1e1e1e;
+	--eip-dark-color:    #f0f0f0;
+	--eip-overlay-bg:    rgba( 0, 0, 0, 0.6 );
+	--eip-radius:        4px;
+	--eip-size-small:    360px;
+	--eip-size-medium:   560px;
+	--eip-size-large:    820px;
+}
 
 /* Wrapper: covers full viewport when active */
 .eip-modal-wrapper {
@@ -18,7 +34,7 @@
 .eip-overlay {
 	position: absolute;
 	inset: 0;
-	background: rgba( 0, 0, 0, 0.6 );
+	background: var( --eip-overlay-bg );
 	animation: eip-fade-in 0.25s ease forwards;
 }
 
@@ -27,7 +43,7 @@
 	position: absolute;
 	overflow-y: auto;
 	box-shadow: 0 8px 40px rgba( 0, 0, 0, 0.25 );
-	border-radius: 4px;
+	border-radius: var( --eip-radius );
 	padding: 2rem;
 	box-sizing: border-box;
 	animation: eip-fade-in 0.25s ease forwards;
@@ -39,17 +55,17 @@
    ------------------------------------------------------------------ */
 
 .eip-modal--small {
-	width: 360px;
+	width: var( --eip-size-small );
 	max-width: 92vw;
 }
 
 .eip-modal--medium {
-	width: 560px;
+	width: var( --eip-size-medium );
 	max-width: 92vw;
 }
 
 .eip-modal--large {
-	width: 820px;
+	width: var( --eip-size-large );
 	max-width: 92vw;
 }
 
@@ -63,7 +79,7 @@
 	transform: translateX( -50% );
 	max-width: 100%;
 	width: 100%;
-	border-radius: 0 0 4px 4px;
+	border-radius: 0 0 var( --eip-radius ) var( --eip-radius );
 }
 
 .eip-modal--bottom {
@@ -72,7 +88,7 @@
 	transform: translateX( -50% );
 	max-width: 100%;
 	width: 100%;
-	border-radius: 4px 4px 0 0;
+	border-radius: var( --eip-radius ) var( --eip-radius ) 0 0;
 }
 
 .eip-modal--left {
@@ -80,7 +96,7 @@
 	left: 0;
 	height: 100%;
 	max-height: 100vh;
-	border-radius: 0 4px 4px 0;
+	border-radius: 0 var( --eip-radius ) var( --eip-radius ) 0;
 }
 
 .eip-modal--right {
@@ -88,7 +104,7 @@
 	right: 0;
 	height: 100%;
 	max-height: 100vh;
-	border-radius: 4px 0 0 4px;
+	border-radius: var( --eip-radius ) 0 0 var( --eip-radius );
 }
 
 .eip-modal--center {
@@ -108,23 +124,24 @@
    ------------------------------------------------------------------ */
 
 .eip-modal--light {
-	background: #ffffff;
-	color: #333333;
+	background: var( --eip-light-bg );
+	color: var( --eip-light-color );
 }
 
 .eip-modal--dark {
-	background: #1e1e1e;
-	color: #f0f0f0;
+	background: var( --eip-dark-bg );
+	color: var( --eip-dark-color );
 }
 
 .eip-modal--dark .eip-modal__close {
-	color: #cccccc;
+	color: var( --eip-dark-color );
+	opacity: 0.7;
 }
 
 .eip-modal--dark .eip-modal__close:hover,
 .eip-modal--dark .eip-modal__close:focus-visible {
 	background: rgba( 255, 255, 255, 0.12 );
-	color: #ffffff;
+	opacity: 1;
 }
 
 /* ------------------------------------------------------------------
@@ -142,7 +159,7 @@
 	font-size: 1.5rem;
 	line-height: 1;
 	color: #666666;
-	border-radius: 3px;
+	border-radius: var( --eip-radius );
 	transition: background 0.2s ease, color 0.2s ease;
 	z-index: 1;
 }
