@@ -225,8 +225,13 @@
 		document.addEventListener( 'keydown', handleEsc );
 
 		// Track CTA link clicks as conversions.
-		const links = wrapper.querySelectorAll( '.eip-modal__content a[href]' );
-		links.forEach( function ( link ) {
+		// Prefer Gutenberg button blocks and explicitly marked CTAs; fall back to all content links.
+		const ctaSelector = '.wp-block-button a, .wp-block-button__link, a[data-eip-cta]';
+		let ctaLinks = Array.from( wrapper.querySelectorAll( ctaSelector ) );
+		if ( ! ctaLinks.length ) {
+			ctaLinks = Array.from( wrapper.querySelectorAll( '.eip-modal__content a[href]' ) );
+		}
+		ctaLinks.forEach( function ( link ) {
 			link.addEventListener( 'click', function () {
 				store.set( 'eip_converted_' + popupId, '1' );
 				trackEvent( popupId, 'conversion' );
