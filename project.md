@@ -35,3 +35,15 @@ These should appear in the right hand sidebar at the top, on the backend of Word
 - We will need Google Analytics v4 integration for tracking on page.
     - When the modal appears
     - User action when modal is interacted with, close or click CTA in modal to go to specific landing page.
+
+## Additions
+
+- Add ability to clear A/B test data from backend interface. There should be a confirm popup to be sure the admin user is sure they want to go through with the clearing of data.
+- We should add a backend global settings page to the plugin for:
+    - Setting: to change dark and light mode background colors.
+    - Setting: to change the overlay background color.
+    - Setting: to add border radius to modal popups.
+    - Setting: to change the 3 sizes to custom sizes.
+    - Setting: to customize the Google Analytics 4 Integration even names.
+- Use CSS variables where possible to allow styles customizations.
+- When the modal is open we should trap the tab index into the modal window so that user can't tab into the background page making it difficult to exit the popup (modal) when tabbing.
