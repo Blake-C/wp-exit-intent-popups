@@ -34,10 +34,11 @@ class EIP_Page_Assignment {
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
 		add_action( 'save_post', array( $this, 'save_meta' ) );
 
-		// Bulk assignment hooks.
+		// Bulk assignment/unassignment hooks.
 		foreach ( self::SUPPORTED_POST_TYPES as $post_type ) {
 			add_filter( 'bulk_actions-edit-' . $post_type, array( $this, 'register_bulk_actions' ) );
 			add_filter( 'handle_bulk_actions-edit-' . $post_type, array( $this, 'handle_bulk_assign' ), 10, 3 );
+			add_filter( 'handle_bulk_actions-edit-' . $post_type, array( $this, 'handle_bulk_unassign' ), 10, 3 );
 		}
 		add_action( 'restrict_manage_posts', array( $this, 'render_bulk_popup_selector' ) );
 		add_action( 'admin_notices', array( $this, 'bulk_action_notice' ) );
@@ -134,7 +135,8 @@ class EIP_Page_Assignment {
 	 * @return array
 	 */
 	public function register_bulk_actions( $bulk_actions ) {
-		$bulk_actions['eip_assign_popup'] = __( 'Assign Exit Intent Popup', 'wp-exit-intent-popups' );
+		$bulk_actions['eip_assign_popup']   = __( 'Assign Exit Intent Popup', 'wp-exit-intent-popups' );
+		$bulk_actions['eip_unassign_popup'] = __( 'Unassign Exit Intent Popup', 'wp-exit-intent-popups' );
 		return $bulk_actions;
 	}
 
@@ -226,6 +228,34 @@ class EIP_Page_Assignment {
 	}
 
 	/**
+	 * Process the bulk "Unassign Exit Intent Popup" action.
+	 *
+	 * Removes all popup assignments from the selected pages/posts.
+	 *
+	 * @param string $redirect_url Redirect URL after bulk action.
+	 * @param string $action       Current bulk action slug.
+	 * @param int[]  $post_ids     Selected post IDs.
+	 * @return string
+	 */
+	public function handle_bulk_unassign( $redirect_url, $action, $post_ids ) {
+		if ( 'eip_unassign_popup' !== $action ) {
+			return $redirect_url;
+		}
+
+		$count = 0;
+		foreach ( $post_ids as $post_id ) {
+			$post_id = (int) $post_id;
+			if ( ! current_user_can( 'edit_post', $post_id ) ) {
+				continue;
+			}
+			update_post_meta( $post_id, '_eip_assigned_popups', array() );
+			++$count;
+		}
+
+		return add_query_arg( 'eip_bulk_unassigned', $count, $redirect_url );
+	}
+
+	/**
 	 * Show an admin notice after a bulk assignment action.
 	 */
 	public function bulk_action_notice() {
@@ -260,6 +290,27 @@ class EIP_Page_Assignment {
 			printf(
 				'<div class="notice notice-error is-dismissible"><p>%s</p></div>',
 				esc_html( $msg )
+			);
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- query params set by our own add_query_arg() redirect, not user-controlled form input.
+		if ( isset( $_GET['eip_bulk_unassigned'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- same as above.
+			$count = absint( $_GET['eip_bulk_unassigned'] );
+			printf(
+				'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+				esc_html(
+					sprintf(
+						/* translators: %d: number of pages updated */
+						_n(
+							'All exit intent popups removed from %d page.',
+							'All exit intent popups removed from %d pages.',
+							$count,
+							'wp-exit-intent-popups'
+						),
+						$count
+					)
+				)
 			);
 		}
 	}
