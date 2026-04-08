@@ -169,6 +169,10 @@ class EIP_Frontend {
 	/**
 	 * Get published popup posts assigned to the current page/post.
 	 *
+	 * Results are cached in the object cache for the duration of the request so
+	 * the DB query runs at most once per page load (called from both
+	 * enqueue_assets() and render_modals()).
+	 *
 	 * @return WP_Post[]
 	 */
 	public function get_assigned_popups() {
@@ -177,17 +181,25 @@ class EIP_Frontend {
 			return array();
 		}
 
+		$cache_key = 'eip_assigned_popups_' . $post_id;
+		$cached    = wp_cache_get( $cache_key, 'eip' );
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
 		$assigned = get_post_meta( $post_id, '_eip_assigned_popups', true );
 		if ( ! is_array( $assigned ) || empty( $assigned ) ) {
+			wp_cache_set( $cache_key, array(), 'eip' );
 			return array();
 		}
 
 		$assigned = array_values( array_filter( array_map( 'intval', $assigned ) ) );
 		if ( empty( $assigned ) ) {
+			wp_cache_set( $cache_key, array(), 'eip' );
 			return array();
 		}
 
-		return get_posts(
+		$popups = get_posts(
 			array(
 				'post_type'      => 'exit_intent_popup',
 				'post_status'    => 'publish',
@@ -196,5 +208,8 @@ class EIP_Frontend {
 				'orderby'        => 'post__in',
 			)
 		);
+
+		wp_cache_set( $cache_key, $popups, 'eip' );
+		return $popups;
 	}
 }
