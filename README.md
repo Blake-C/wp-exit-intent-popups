@@ -162,4 +162,4 @@ Once a visitor clicks a CTA link inside a popup, that popup is marked as convert
 
 ---
 
-> **Generated with [Claude Code](https://claude.ai/claude-code)**
+> **Assisted by [Claude Code](https://claude.ai/claude-code)**
